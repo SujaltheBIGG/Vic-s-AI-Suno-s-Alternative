@@ -109,6 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
   const logout = useCallback((): void => {
     authApi.logout().catch(() => {});
     setUser(null);
+    // Send the user back to the marketing site after signing out.
+    setTimeout(() => { window.location.href = '/'; }, 0);
     setToken(null);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
