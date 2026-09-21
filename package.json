@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && cd server && npm install && npm run build",
     "preview": "vite preview",
-    "start": "cd server && npx tsx src/index.ts & npm run dev"
+    "start": "cd server && node dist/index.js"
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.15",

@@ -1,0 +1,11 @@
+node_modules
+server/node_modules
+dist
+server/dist
+.git
+my-songs/*.mp3
+server/public/audio
+landing/assets/*.mov
+docs
+audiomass-editor
+server/audio-editor
