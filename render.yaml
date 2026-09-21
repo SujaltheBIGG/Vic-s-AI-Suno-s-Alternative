@@ -1,0 +1,69 @@
+# Render blueprint — https://render.com/docs/blueprint-spec
+#
+# One web service serves the marketing site (/), the app (/app) and the API.
+# No GPU or disk is needed here: generation runs on Modal, data lives in
+# Postgres and object storage.
+#
+# Deploy: Render dashboard -> New -> Blueprint -> pick this repo.
+# Secrets are marked sync:false, so Render prompts for them instead of
+# keeping them in git.
+
+services:
+  - type: web
+    name: vics-ai
+    runtime: node
+    plan: free
+    region: singapore          # closest free region to Supabase ap-southeast-2
+    branch: main
+    # Root project = frontend, server/ = API. Both need installing and building.
+    buildCommand: npm install && npm run build && cd server && npm install && npm run build
+    startCommand: cd server && npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+
+      # Require real accounts; disables the single-user dev shortcut.
+      - key: DISABLE_AUTO_LOGIN
+        value: "true"
+
+      # --- set these in the Render dashboard ---
+      - key: DATABASE_URL          # Supabase session pooler URI
+        sync: false
+      - key: JWT_SECRET            # long random string
+        generateValue: true
+
+      - key: STORAGE_PROVIDER
+        value: s3
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_REGION
+        value: ap-southeast-2
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_PUBLIC_BASE_URL
+        sync: false
+
+      - key: ACESTEP_API_URL       # Modal engine URL
+        sync: false
+
+      # Set both to the service's own https URL once Render assigns it.
+      - key: FRONTEND_URL
+        sync: false
+      - key: APP_URL
+        sync: false
+
+      # Optional — "Continue with Google"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
