@@ -1,0 +1,19 @@
+{
+  "customMode": true,
+  "title": "Modal Test",
+  "lyrics": "[verse]\nRunning in the cloud tonight\nNothing on my desk\n",
+  "style": "dark pop, alt-pop, female vocal, sparse minimal production, trap-influenced hi-hats, deep sub bass, moody electric piano, breathy intimate verses building to a belted emotional chorus, 136 BPM, D minor, 4/4, melancholic and cinematic, modern radio pop production, heavy reverb, vulnerable and defiant",
+  "instrumental": false,
+  "vocalLanguage": "en",
+  "duration": 30,
+  "bpm": 136,
+  "keyScale": "D minor",
+  "timeSignature": "4/4",
+  "inferenceSteps": 8,
+  "guidanceScale": 9.0,
+  "shift": 3.0,
+  "batchSize": 1,
+  "randomSeed": true,
+  "audioFormat": "mp3",
+  "thinking": false
+}

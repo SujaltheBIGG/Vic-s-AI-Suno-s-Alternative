@@ -1,0 +1,19 @@
+{
+  "customMode": true,
+  "title": "Paper Crown",
+  "lyrics": "[intro]\n\n[verse]\nI found you face down in the dark\nGave you a pulse, gave you a spark\nI stitched your name into my skin\nAnd let you walk right out again\n\n[pre-chorus]\nAnd every time you swore you'd stay\nYou were already halfway gone\n\n[chorus]\nSo wear your paper crown\nI'm the one who made it\nWatch it all burn down\nBaby, you can't fake it\nI gave you every piece of gold I had\nYou melted it for someone else's hand\nWear your paper crown\n\n[verse]\nNow they all sing your name so loud\nYou never say mine out loud\nI was the mirror, you were the light\nI only shined when you were right\n\n[pre-chorus]\nAnd every time you swore you'd stay\nYou were already halfway gone\n\n[chorus]\nSo wear your paper crown\nI'm the one who made it\nWatch it all burn down\nBaby, you can't fake it\nI gave you every piece of gold I had\nYou melted it for someone else's hand\nWear your paper crown\n\n[bridge]\nI don't want you back\nI want the years\nI want the girl I was before the tears\nShe's still in here somewhere\nShe's still in here\n\n[chorus]\nSo wear your paper crown\nI'm the one who made it\nWatch it all burn down\nBaby, you can't fake it\n\n[outro]\nWear your paper crown\nWear your paper crown\n",
+  "style": "dark pop, alt-pop, female vocal, sparse minimal production, trap-influenced hi-hats, deep sub bass, moody electric piano, breathy intimate verses building to a belted emotional chorus, 136 BPM, D minor, 4/4, melancholic and cinematic, modern radio pop production, heavy reverb, vulnerable and defiant",
+  "instrumental": false,
+  "vocalLanguage": "en",
+  "duration": 180,
+  "bpm": 136,
+  "keyScale": "D minor",
+  "timeSignature": "4/4",
+  "inferenceSteps": 16,
+  "guidanceScale": 9.0,
+  "shift": 3.0,
+  "batchSize": 1,
+  "randomSeed": true,
+  "audioFormat": "mp3",
+  "thinking": false
+}

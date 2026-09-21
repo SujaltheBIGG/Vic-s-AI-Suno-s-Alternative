@@ -1,0 +1,19 @@
+{
+  "customMode": true,
+  "title": "Or et Miel",
+  "lyrics": "[intro]\n\n[verse]\nIl est entré un soir de pluie\nSans un regard, sans un bruit\nLa ville dormait sous les toits\nEt moi je n'attendais que lui\n\n[chorus]\nOr et miel, sa peau contre la mienne\nOr et miel, l'été ne finit pas\nOr et miel, je ne connais plus la peine\nIl revient toujours, toujours vers moi\n\n[verse]\nOn a dansé sur le pavé\nDeux ombres dans la lumière\nIl m'a promis les mois d'été\nUne valse, et puis l'hiver\n\n[chorus]\nOr et miel, sa peau contre la mienne\nOr et miel, l'été ne finit pas\nOr et miel, je ne connais plus la peine\nIl revient toujours, toujours vers moi\n\n[instrumental]\n\n[bridge]\nLes saisons tournent, tournent encore\nJe garde sa voix dans le noir\nIl part, il revient, il s'endort\nMon amour a le goût du soir\n\n[verse]\nEt s'il s'en va, je l'attendrai\nLe même soir, la même pluie\nCar tout ce que j'ai jamais aimé\nPorte son nom, porte sa vie\n\n[chorus]\nOr et miel, sa peau contre la mienne\nOr et miel, l'été ne finit pas\nOr et miel, je ne connais plus la peine\nIl revient toujours, toujours vers moi\n\n[outro]\nOr et miel...\nOr et miel...\n",
+  "style": "chanson, baroque pop, female vocal, harpsichord-led waltz, lilting 6/8 with a dropped beat every fourth bar, 90 BPM, D minor, descending chromatic harpsichord riff, dry restrained early-80s drum kit, soft brushed snare, melodic fretless bass, intimate reverbed female alto, melancholic but warm, hypnotic and circular, sparse vintage analog arrangement",
+  "instrumental": false,
+  "vocalLanguage": "fr",
+  "duration": 219,
+  "bpm": 90,
+  "keyScale": "D minor",
+  "timeSignature": "6/8",
+  "inferenceSteps": 16,
+  "guidanceScale": 9.0,
+  "shift": 3.0,
+  "batchSize": 1,
+  "randomSeed": true,
+  "audioFormat": "mp3",
+  "thinking": false
+}
