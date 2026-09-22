@@ -32,7 +32,10 @@ image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git", "ffmpeg", "libsndfile1")
     .run_commands(
-        "git clone --depth 1 https://github.com/ace-step/ACE-Step-1.5 /opt/acestep",
+        # Pinned: the backend sends a positional parameter list that matches this
+# commit. Newer ACE-Step builds add parameters (e.g. Sampler Mode) which
+# shift the positions and break generation.
+        "git clone https://github.com/ace-step/ACE-Step-1.5 /opt/acestep && cd /opt/acestep && git checkout ca1e85fe9430179831e6bc6be790c332190a3866",
         # ACE-Step vendors nano-vllm and pins CUDA torch via [tool.uv.sources],
         # which pip cannot resolve — uv is required, same as the local setup.
         "pip install --no-cache-dir uv",

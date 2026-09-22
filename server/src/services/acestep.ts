@@ -177,7 +177,8 @@ async function buildGradioArgs(params: GenerationParams): Promise<unknown[]> {
     params.cfgIntervalEnd ?? 1.0,                                 // 23: CFG Interval End
     params.shift ?? 3.0,                                          // 24: Shift
     params.inferMethod || 'ode',                                  // 25: Inference Method
-    params.customTimesteps || '',                                 // 26: Custom Timesteps
+    'euler',                                                      // 26: Sampler Mode (engine rejects an empty value here)
+    params.customTimesteps || '',                                 // 27: Custom Timesteps
     params.audioFormat || 'mp3',                                  // 27: Audio Format
     params.lmTemperature ?? 0.85,                                 // 28: LM Temperature
     isThinking,                                                   // 29: Think
