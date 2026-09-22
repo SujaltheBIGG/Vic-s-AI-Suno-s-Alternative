@@ -141,7 +141,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onAuthenticated })
                   type="email"
                   placeholder="Email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  // Pasting from chat apps can bring spaces or invisible direction
+                  // marks, which make the browser reject the address outright.
+                  onChange={(e) => setEmail(e.target.value.replace(/[\s ​-\u200F\u202A-\u202E⁠﻿]/g, ''))}
                   autoComplete="email"
                   required
                 />
