@@ -217,7 +217,11 @@ async function buildGradioArgs(params: GenerationParams): Promise<unknown[]> {
     params.getLrc ?? false,                                       // 50 auto_lrc
     params.scoreScale ?? 0.5,                                     // 51 score_scale
     params.lmBatchChunkSize ?? 8,                                 // 52 lm_batch_chunk_size
-    params.trackName || null,                                     // 53 track_name
+    null,                                                         // 53 track_name
+    // NOTE: despite the name, the engine's "Track Name" is a stem selector
+    // (vocals, drums, bass, ...), not the song title. Sending a user's title
+    // here is rejected as an invalid dropdown choice. The title is applied to
+    // the saved track on our side instead.
     params.completeTrackClasses || [],                            // 54 complete_track_classes
     true,                                                         // 55 enable_normalization
     -1.0,                                                         // 56 normalization_db
