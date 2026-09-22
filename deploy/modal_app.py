@@ -60,6 +60,8 @@ image = (
         # acestep has no --checkpoint_path flag; this env var is how the
         # checkpoint directory is set (see get_checkpoints_dir()).
         "ACESTEP_CHECKPOINTS_DIR": CKPT,
+        # resolved on the deploying machine, where MODAL_GPU is set
+        "VICS_DEVICE": DEVICE,
     })
 )
 
@@ -82,7 +84,14 @@ app = modal.App(APP_NAME, image=image)
 @modal.web_server(port=PORT, startup_timeout=60 * 15)
 def engine():
     """Launch the ACE-Step Gradio server with its API endpoints enabled."""
+    import os
     import subprocess
+
+    # MODAL_GPU only exists on the machine that ran `modal deploy`, so it is
+    # baked into the image env below. Reading it at runtime would always give
+    # "cpu" and the model would load on CPU with an idle GPU attached.
+    device = os.environ.get("VICS_DEVICE", "cpu")
+    print(f"[engine] device={device}")
 
     subprocess.Popen(
         [
@@ -90,7 +99,7 @@ def engine():
             "--port", str(PORT),
             "--server-name", "0.0.0.0",
             "--enable-api",
-            "--device", DEVICE,
+            "--device", device,
             "--backend", "pt",
             "--init_llm", "false",          # thinking mode off; we don't use it
         ],
