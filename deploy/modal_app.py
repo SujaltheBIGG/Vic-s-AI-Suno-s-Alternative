@@ -69,9 +69,11 @@ app = modal.App(APP_NAME, image=image)
     memory=16384,
     volumes={"/weights": weights},
     timeout=60 * 60,
-    # Keep the container alive between requests so a demo doesn't pay the
-    # cold start on every track. Raise for a smoother demo, lower to save credit.
-    scaledown_window=300,
+    # Generation runs inside Gradio's own queue, so Modal sees no HTTP traffic
+    # while a track is being made. At 300s the container was being recycled
+    # mid-generation and jobs never finished. This must exceed the longest
+    # generation: CPU takes 4-11 min, so 20 min leaves headroom.
+    scaledown_window=1200,
     max_containers=1,
 )
 @modal.web_server(port=PORT, startup_timeout=60 * 15)
