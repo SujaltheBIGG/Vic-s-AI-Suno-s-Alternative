@@ -1738,8 +1738,8 @@ export const CreatePanel: React.FC<CreatePanelProps> = ({
           )}
         </div>
 
-        {/* LORA CONTROL PANEL — hidden: LoRA loading needs files on the engine host */}
-        {false && customMode && (
+        {/* LORA CONTROL PANEL */}
+        {customMode && (
           <>
             <button
               onClick={() => setShowLoraPanel(!showLoraPanel)}

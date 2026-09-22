@@ -104,13 +104,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => onNavigate('search')}
           isExpanded={isOpen}
         />
-        {false && <NavItem
+        <NavItem
           icon={<GraduationCap size={20} />}
           label={t('training')}
           active={currentView === 'training'}
           onClick={() => onNavigate('training')}
           isExpanded={isOpen}
-        />}
+        />
         <NavItem
           icon={<Newspaper size={20} />}
           label={t('news')}
