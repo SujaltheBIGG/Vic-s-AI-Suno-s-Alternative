@@ -1124,7 +1124,7 @@ export const CreatePanel: React.FC<CreatePanelProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">ACE-Step v1.5</span>
+            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Vic’s AI v1.5</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -1145,7 +1145,7 @@ export const CreatePanel: React.FC<CreatePanelProps> = ({
             </div>
 
             {/* Model Selection */}
-            <div className="relative" ref={modelMenuRef}>
+            <div className="relative hidden" ref={modelMenuRef}>
               <button
                 onClick={() => setShowModelMenu(!showModelMenu)}
                 className="bg-zinc-200 dark:bg-black/40 border border-zinc-300 dark:border-white/5 rounded-md px-2 py-1 text-[11px] font-medium text-zinc-900 dark:text-white hover:bg-zinc-300 dark:hover:bg-black/50 transition-colors flex items-center gap-1"
@@ -1738,8 +1738,8 @@ export const CreatePanel: React.FC<CreatePanelProps> = ({
           )}
         </div>
 
-        {/* LORA CONTROL PANEL */}
-        {customMode && (
+        {/* LORA CONTROL PANEL — hidden: LoRA loading needs files on the engine host */}
+        {false && customMode && (
           <>
             <button
               onClick={() => setShowLoraPanel(!showLoraPanel)}

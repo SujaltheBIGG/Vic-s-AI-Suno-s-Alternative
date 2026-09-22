@@ -218,26 +218,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                         <div className="pl-7 space-y-3 text-sm text-zinc-600 dark:text-zinc-400">
                             <p>{t('version')} 2.0.0</p>
                             <p>Vic’s AI - {t('localAIMusicGenerator')}</p>
-                            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
-                                {t('poweredBy')}
-                            </p>
                             <div className="pt-3 border-t border-zinc-200 dark:border-zinc-700/50 mt-4 space-y-4">
                                 <div>
                                     <p className="text-zinc-900 dark:text-white font-medium mb-2">{t('createdBy')}</p>
                                     <div className="flex flex-wrap gap-2">
                                         <a
-                                            href="https://x.com/AmbsdOP"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
-                                        >
-                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                                            </svg>
-                                            {t('follow')} @AmbsdOP
-                                        </a>
-                                        <a
-                                            href="https://github.com/fspecii/ace-step-ui"
+                                            href="https://github.com/SujaltheBIGG/Vic-s-AI-Suno-s-Alternative"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 dark:bg-zinc-700 text-white rounded-lg text-sm font-medium hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
