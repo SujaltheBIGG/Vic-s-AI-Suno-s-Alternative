@@ -32,6 +32,29 @@ export async function getGradioClient(): Promise<Client> {
 }
 
 /**
+ * Run one request on a fresh client, then drop its connection.
+ *
+ * The engine's UI has gr.State components, so every client opens a heartbeat
+ * stream that stays open until the client goes away. On Modal an open request
+ * keeps the GPU container awake and billing, so a cached client would stop it
+ * from ever scaling down. The library's own close() doesn't end the heartbeat
+ * (the stream's close is a stub), but the heartbeat is the last stream opened
+ * during connect, so its AbortController is the client's current one here.
+ */
+export async function withGradioClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
+  const client = await Client.connect(config.acestep.apiUrl, {
+    events: ["data", "status"],
+  });
+  const heartbeat = (client as unknown as { abort_controller?: AbortController }).abort_controller;
+  try {
+    return await fn(client);
+  } finally {
+    heartbeat?.abort();
+    client.close();
+  }
+}
+
+/**
  * Reset the cached Gradio client, forcing a new connection on next use.
  */
 export function resetGradioClient(): void {

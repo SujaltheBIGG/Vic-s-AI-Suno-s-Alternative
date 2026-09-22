@@ -6,7 +6,7 @@ import { pool } from '../db/pool.js';
 import { generateUUID } from '../db/sqlite.js';
 import { config } from '../config/index.js';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/auth.js';
-import { getGradioClient } from '../services/gradio-client.js';
+import { withGradioClient } from '../services/gradio-client.js';
 import {
   generateMusicViaAPI,
   getJobStatus,
@@ -678,9 +678,9 @@ router.get('/models', async (_req, res: Response) => {
 // GET /api/generate/random-description — Load a random simple description from Gradio
 router.get('/random-description', authMiddleware, async (_req: AuthenticatedRequest, res: Response) => {
   try {
-    const client = await getGradioClient();
-    const result = await client.predict('/load_random_simple_description', []);
-    const data = result.data as unknown[];
+    const data = await withGradioClient(async (client) =>
+      (await client.predict('/load_random_simple_description', [])).data as unknown[]
+    );
     // Returns [description, instrumental, vocal_language]
     res.json({
       description: data[0] || '',

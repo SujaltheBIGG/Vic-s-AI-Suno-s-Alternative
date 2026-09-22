@@ -20,13 +20,14 @@ function getAudioDuration(filePath: string): number {
 }
 import { fileURLToPath } from 'url';
 import { config } from '../config/index.js';
-import { getGradioClient, resetGradioClient, isGradioAvailable } from './gradio-client.js';
+import { withGradioClient, resetGradioClient, isGradioAvailable } from './gradio-client.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const AUDIO_DIR = path.join(__dirname, '../../public/audio');
 
 const ACESTEP_API = config.acestep.apiUrl;
+const ENGINE_IS_LOCAL = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(ACESTEP_API);
 
 // Resolve ACE-Step path (from env or default relative path)
 function resolveAceStepPath(): string {
@@ -420,40 +421,6 @@ export async function checkSpaceHealth(): Promise<boolean> {
   return isGradioAvailable();
 }
 
-// ---------------------------------------------------------------------------
-// Model switching — call /v1/init to change the active DiT model
-// ---------------------------------------------------------------------------
-
-async function getActiveModel(): Promise<string | null> {
-  try {
-    const res = await fetch(`${ACESTEP_API}/v1/models`);
-    if (!res.ok) return null;
-    const data = await res.json() as any;
-    const models = data?.data?.models || data?.models || [];
-    return models[0]?.name || null;
-  } catch {
-    return null;
-  }
-}
-
-async function switchModelIfNeeded(ditModel: string): Promise<void> {
-  const activeModel = await getActiveModel();
-  if (activeModel === ditModel) return; // already loaded, no-op
-
-  console.log(`[Model] Switching from '${activeModel ?? 'unknown'}' to '${ditModel}'`);
-  const res = await fetch(`${ACESTEP_API}/v1/init`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: ditModel, init_llm: false }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text().catch(() => '');
-    throw new Error(`Model switch to '${ditModel}' failed: ${res.status} ${err}`);
-  }
-  console.log(`[Model] Switched to '${ditModel}'`);
-}
-
 // Discover endpoints (for compatibility)
 export async function discoverEndpoints(): Promise<unknown> {
   return { provider: 'acestep-gradio', endpoint: ACESTEP_API };
@@ -540,6 +507,22 @@ async function processGeneration(
     return;
   }
 
+  // A remote engine gets no local fallback. On Railway there is no local
+  // install (spawn ENOENT), and on a dev machine it silently re-runs the song
+  // on this CPU for 10+ minutes; either way the real engine error is lost.
+  // The 5s availability probe is skipped too: a cold Modal container takes
+  // about 80s to answer, and connecting waits for it.
+  if (!ENGINE_IS_LOCAL) {
+    try {
+      await processGenerationViaGradio(jobId, params, job);
+    } catch (error) {
+      console.error(`Job ${jobId}: Generation failed`, error);
+      job.status = 'failed';
+      job.error = error instanceof Error ? error.message : 'Generation failed';
+    }
+    return;
+  }
+
   // Try Gradio first
   const gradioUp = await isGradioAvailable();
   if (gradioUp) {
@@ -561,13 +544,13 @@ async function processGenerationViaGradio(
   params: GenerationParams,
   job: ActiveJob,
 ): Promise<void> {
-  // Switch DiT model if a specific one was requested
+  // The Gradio engine has no model-switch route (/v1/init only exists in
+  // ACE-Step's separate REST server), so a request for another model can only
+  // fail. Generate with whichever model the engine loaded at startup.
   if (params.ditModel) {
-    job.stage = `Loading model ${params.ditModel}...`;
-    await switchModelIfNeeded(params.ditModel);
+    console.log(`Job ${jobId}: requested model '${params.ditModel}'; using the engine's loaded model`);
   }
 
-  const client = await getGradioClient();
   const args = await buildGradioArgs(params);
 
   const caption = params.style || 'pop music';
@@ -587,7 +570,7 @@ async function processGenerationViaGradio(
   // ~21 minutes before surfacing a failure. Bound the wait so problems show up
   // in minutes, not after the whole idle window has elapsed.
   const timeoutMs = Number(process.env.GENERATION_TIMEOUT_MS) || 10 * 60_000;
-  const result = await Promise.race([
+  const result = await withGradioClient((client) => Promise.race([
     client.predict('/generation_wrapper', args),
     new Promise<never>((_, reject) =>
       setTimeout(
@@ -595,7 +578,7 @@ async function processGenerationViaGradio(
         timeoutMs
       ).unref()
     ),
-  ]);
+  ]));
   const data = result.data as unknown[];
 
   if (!Array.isArray(data) || data.length === 0) {

@@ -81,6 +81,13 @@ app = modal.App(APP_NAME, image=image)
     scaledown_window=1200,
     max_containers=1,
 )
+# Modal serves one request per container unless told otherwise. Every Gradio
+# client holds a heartbeat stream open for its whole session, so with a single
+# container that heartbeat took the only slot and every later request queued
+# behind it — including the stream that carries the finished song. The track
+# was generated in seconds but never delivered. Gradio needs sticky sessions,
+# so scale requests within the one container, not containers.
+@modal.concurrent(max_inputs=100)
 @modal.web_server(port=PORT, startup_timeout=60 * 15)
 def engine():
     """Launch the ACE-Step Gradio server with its API endpoints enabled."""
