@@ -77,7 +77,8 @@ const SCRIPTS_DIR = path.join(__dirname, '../../scripts');
 const PYTHON_SCRIPT = path.join(SCRIPTS_DIR, 'simple_generate.py');
 
 // ---------------------------------------------------------------------------
-// Gradio generation: map params to the 51 positional args for /generation_wrapper
+// Gradio generation: map params to the 72 positional args for /generation_wrapper
+const GRADIO_ARG_COUNT = 72;
 // ---------------------------------------------------------------------------
 
 /**
@@ -128,7 +129,7 @@ async function prepareAudioFile(audioUrl: string | undefined): Promise<unknown> 
 }
 
 /**
- * Build the 50 positional arguments for the Gradio /generation_wrapper endpoint.
+ * Build the 72 positional arguments for the Gradio /generation_wrapper endpoint.
  */
 async function buildGradioArgs(params: GenerationParams): Promise<unknown[]> {
   const caption = params.style || 'pop music';
@@ -150,62 +151,105 @@ async function buildGradioArgs(params: GenerationParams): Promise<unknown[]> {
   // CoT features are gated by enhance OR thinking (either enables LLM enrichment)
   const useCot = isEnhance || isThinking;
 
-  return [
-    prompt,                                                       //  0: Music Caption
-    lyrics,                                                       //  1: Lyrics
-    params.bpm && params.bpm > 0 ? params.bpm : 0,               //  2: BPM (0 = auto)
-    params.keyScale || '',                                        //  3: KeyScale
-    params.timeSignature || '',                                   //  4: Time Signature
-    params.vocalLanguage || 'en',                                 //  5: Vocal Language
-    params.inferenceSteps ?? 8,                                   //  6: DiT Inference Steps
-    params.guidanceScale ?? 7.0,                                  //  7: DiT Guidance Scale
-    params.randomSeed !== false,                                  //  8: Random Seed
-    String(params.seed ?? -1),                                    //  9: Seed
-    referenceAudio,                                               // 10: Reference Audio (filepath | null)
-    params.duration && params.duration > 0 ? params.duration : -1, // 11: Audio Duration (-1 = auto)
-    Math.min(Math.max(params.batchSize ?? 1, 1), 16),            // 12: Batch Size (clamped 1-16)
-    sourceAudio,                                                  // 13: Source Audio (filepath | null)
-    params.audioCodes || '',                                      // 14: LM Codes Hints
-    params.repaintingStart ?? 0.0,                                // 15: Repainting Start
-    params.repaintingEnd ?? -1,                                   // 16: Repainting End
-    params.instruction || 'Fill the audio semantic mask with the style described in the text prompt.', // 17: Instruction
-    params.audioCoverStrength ?? 1.0,                             // 18: Audio Cover Strength
-    0.0,                                                          // 19: Cover Noise Strength (ACE-Step v1.5 new param, default 0.0)
-    (params.taskType === 'audio2audio' ? 'cover' : params.taskType) || 'text2music', // 20: Task Type
-    params.useAdg ?? false,                                       // 21: Use ADG
-    params.cfgIntervalStart ?? 0.0,                               // 22: CFG Interval Start
-    params.cfgIntervalEnd ?? 1.0,                                 // 23: CFG Interval End
-    params.shift ?? 3.0,                                          // 24: Shift
-    params.inferMethod || 'ode',                                  // 25: Inference Method
-    'euler',                                                      // 26: Sampler Mode (engine rejects an empty value here)
-    params.customTimesteps || '',                                 // 27: Custom Timesteps
-    params.audioFormat || 'mp3',                                  // 27: Audio Format
-    params.lmTemperature ?? 0.85,                                 // 28: LM Temperature
-    isThinking,                                                   // 29: Think
-    params.lmCfgScale ?? 2.0,                                    // 30: LM CFG Scale
-    params.lmTopK ?? 0,                                           // 31: LM Top-K
-    params.lmTopP ?? 0.9,                                         // 32: LM Top-P
-    params.lmNegativePrompt || 'NO USER INPUT',                   // 33: LM Negative Prompt
-    useCot ? (params.useCotMetas ?? true) : false,                // 34: CoT Metas
-    useCot ? (params.useCotCaption ?? true) : false,              // 35: CaptionRewrite
-    useCot ? (params.useCotLanguage ?? true) : false,             // 36: CoT Language
-    params.isFormatCaption ?? false,                              // 37: Is Format Caption State
-    params.constrainedDecodingDebug ?? false,                     // 38: Constrained Decoding Debug
-    params.allowLmBatch ?? true,                                  // 39: ParallelThinking
-    params.getScores ?? false,                                    // 40: Auto Score
-    params.getLrc ?? false,                                       // 41: Auto LRC (timestamped lyrics)
-    params.scoreScale ?? 0.5,                                     // 42: Quality Score Sensitivity (0.01-1.0)
-    params.lmBatchChunkSize ?? 8,                                 // 43: LM Batch Chunk Size
-    params.trackName || null,                                     // 44: Track Name
-    params.completeTrackClasses || [],                            // 45: Track Names
-    true,                                                         // 46: Enable Normalization (ACE-Step v1.5, default true)
-    -1.0,                                                         // 47: Normalization DB (ACE-Step v1.5, default -1.0)
-    0.0,                                                          // 48: Latent Shift (ACE-Step v1.5, default 0.0)
-    1.0,                                                          // 49: Latent Rescale (ACE-Step v1.5, default 1.0)
-    params.autogen ?? false,                                      // 50: AutoGen
-    // Note: current_batch_index, total_batches, batch_queue, generation_params_state
-    // are hidden Gradio state variables and must NOT be passed via client.predict()
+  // DCW defaults follow the engine's Think-aware table (events/dcw_defaults.py).
+  const dcw = isThinking
+    ? { mode: 'double', scaler: 0.02, highScaler: 0.06 }
+    : { mode: 'double', scaler: 0.05, highScaler: 0.02 };
+
+  // Order and count are derived from the engine's own wiring at commit ca1e85f:
+  // acestep/ui/gradio/events/wiring/generation_run_wiring.py.
+  // That click handler lists 78 inputs, six of which are gr.State components.
+  // Gradio omits gr.State from the HTTP API signature, so exactly 72 values are
+  // sent. The skipped ones are marked below — do not fill them in.
+  const args: unknown[] = [
+    prompt,                                                       //  0 captions
+    lyrics,                                                       //  1 lyrics
+    params.bpm && params.bpm > 0 ? params.bpm : 0,                 //  2 bpm (0 = auto)
+    params.keyScale || '',                                        //  3 key_scale
+    params.timeSignature || '',                                   //  4 time_signature
+    params.vocalLanguage || 'en',                                 //  5 vocal_language
+    params.inferenceSteps ?? 8,                                   //  6 inference_steps
+    params.guidanceScale ?? 7.0,                                  //  7 guidance_scale
+    params.randomSeed !== false,                                  //  8 random_seed_checkbox
+    String(params.seed ?? -1),                                    //  9 seed
+    referenceAudio,                                               // 10 reference_audio
+    params.duration && params.duration > 0 ? params.duration : -1, // 11 audio_duration
+    Math.min(Math.max(params.batchSize ?? 1, 1), 16),             // 12 batch_size_input
+    sourceAudio,                                                  // 13 src_audio
+    params.audioCodes || '',                                      // 14 text2music_audio_code_string
+    params.repaintingStart ?? 0.0,                                // 15 repainting_start
+    params.repaintingEnd ?? -1,                                   // 16 repainting_end
+    params.instruction || 'Fill the audio semantic mask with the style described in the text prompt.', // 17 instruction_display_gen
+    params.audioCoverStrength ?? 1.0,                             // 18 audio_cover_strength
+    0.0,                                                          // 19 cover_noise_strength
+    // -- task_type is gr.State (defaults to "text2music"); NOT part of the API --
+    false,                                                        // 20 no_fsq
+    params.useAdg ?? false,                                       // 21 use_adg
+    params.cfgIntervalStart ?? 0.0,                               // 22 cfg_interval_start
+    params.cfgIntervalEnd ?? 1.0,                                 // 23 cfg_interval_end
+    params.shift ?? 3.0,                                          // 24 shift
+    params.inferMethod || 'ode',                                  // 25 infer_method   ['ode','sde']
+    'euler',                                                      // 26 sampler_mode   ['euler','heun']
+    0.0,                                                          // 27 velocity_norm_threshold
+    0.0,                                                          // 28 velocity_ema_factor
+    false,                                                        // 29 dcw_enabled
+    dcw.mode,                                                     // 30 dcw_mode
+    dcw.scaler,                                                   // 31 dcw_scaler
+    dcw.highScaler,                                               // 32 dcw_high_scaler
+    'haar',                                                       // 33 dcw_wavelet
+    params.customTimesteps || '',                                 // 34 custom_timesteps
+    params.audioFormat || 'mp3',                                  // 35 audio_format
+    '320k',                                                       // 36 mp3_bitrate
+    44100,                                                        // 37 mp3_sample_rate
+    params.lmTemperature ?? 0.85,                                 // 38 lm_temperature
+    isThinking,                                                   // 39 think_checkbox
+    params.lmCfgScale ?? 2.0,                                     // 40 lm_cfg_scale
+    params.lmTopK ?? 0,                                           // 41 lm_top_k
+    params.lmTopP ?? 0.9,                                         // 42 lm_top_p
+    params.lmNegativePrompt || 'NO USER INPUT',                   // 43 lm_negative_prompt
+    useCot ? (params.useCotMetas ?? true) : false,                // 44 use_cot_metas
+    useCot ? (params.useCotCaption ?? true) : false,              // 45 use_cot_caption
+    useCot ? (params.useCotLanguage ?? true) : false,             // 46 use_cot_language
+    // -- is_format_caption_state is gr.State; NOT part of the API --
+    params.constrainedDecodingDebug ?? false,                     // 47 constrained_decoding_debug
+    params.allowLmBatch ?? true,                                  // 48 allow_lm_batch
+    params.getScores ?? false,                                    // 49 auto_score
+    params.getLrc ?? false,                                       // 50 auto_lrc
+    params.scoreScale ?? 0.5,                                     // 51 score_scale
+    params.lmBatchChunkSize ?? 8,                                 // 52 lm_batch_chunk_size
+    params.trackName || null,                                     // 53 track_name
+    params.completeTrackClasses || [],                            // 54 complete_track_classes
+    true,                                                         // 55 enable_normalization
+    -1.0,                                                         // 56 normalization_db
+    0.0,                                                          // 57 fade_in_duration
+    0.0,                                                          // 58 fade_out_duration
+    0.0,                                                          // 59 latent_shift
+    1.0,                                                          // 60 latent_rescale
+    'balanced',                                                   // 61 repaint_mode
+    0.5,                                                          // 62 repaint_strength
+    0.0,                                                          // 63 retake_variance
+    '',                                                           // 64 retake_seed
+    false,                                                        // 65 flow_edit_morph
+    '',                                                           // 66 flow_edit_source_caption
+    '',                                                           // 67 flow_edit_source_lyrics
+    0.0,                                                          // 68 flow_edit_n_min
+    1.0,                                                          // 69 flow_edit_n_max
+    1,                                                            // 70 flow_edit_n_avg
+    params.autogen ?? false,                                      // 71 autogen_checkbox
+    // -- current_batch_index, total_batches, batch_queue, generation_params_state
+    //    are all gr.State; NOT part of the API --
   ];
+
+  // Fail loudly and immediately if the engine's signature ever drifts again.
+  // A short list silently shifts values onto the wrong components, which the
+  // engine only reports as an opaque type error deep inside preprocessing.
+  if (args.length !== GRADIO_ARG_COUNT) {
+    throw new Error(
+      `Internal error: built ${args.length} Gradio arguments, expected ${GRADIO_ARG_COUNT}`
+    );
+  }
+
+  return args;
 }
 
 /**
@@ -533,8 +577,21 @@ async function processGenerationViaGradio(
 
   job.stage = 'Generating music via Gradio...';
 
-  // predict() blocks until generation is complete
-  const result = await client.predict('/generation_wrapper', args);
+  // predict() blocks until generation is complete. It does NOT time out on its
+  // own: when the engine rejects the request the promise can stay pending until
+  // the remote container scales down, which previously left jobs "running" for
+  // ~21 minutes before surfacing a failure. Bound the wait so problems show up
+  // in minutes, not after the whole idle window has elapsed.
+  const timeoutMs = Number(process.env.GENERATION_TIMEOUT_MS) || 10 * 60_000;
+  const result = await Promise.race([
+    client.predict('/generation_wrapper', args),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`Generation timed out after ${timeoutMs / 1000}s`)),
+        timeoutMs
+      ).unref()
+    ),
+  ]);
   const data = result.data as unknown[];
 
   if (!Array.isArray(data) || data.length === 0) {
