@@ -78,7 +78,7 @@ app = modal.App(APP_NAME, image=image)
     # stream open, so Modal won't scale down mid-track; this only sets how long
     # an idle container waits for the next song before shutting down (~80s
     # cold start after that).
-    scaledown_window=300,
+    scaledown_window=240,
     max_containers=1,
 )
 # Modal serves one request per container unless told otherwise. Every Gradio
