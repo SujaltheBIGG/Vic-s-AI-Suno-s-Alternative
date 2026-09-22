@@ -17,6 +17,7 @@ import {
   getJobRawResponse,
   downloadAudioToBuffer,
   resolvePythonPath,
+  ENGINE_IS_LOCAL,
 } from '../services/acestep.js';
 import { getStorageProvider } from '../services/storage/factory.js';
 
@@ -613,19 +614,26 @@ router.get('/models', async (_req, res: Response) => {
       'acestep-v15-turbo-continuous',   // submodel
     ];
 
-    // Query Gradio /v1/models to get the currently loaded/active model
-    let activeModel: string | null = null;
-    try {
-      const apiRes = await fetch(`${config.acestep.apiUrl}/v1/models`);
-      if (apiRes.ok) {
-        const data = await apiRes.json() as any;
-        const gradioModels = data?.data?.models || data?.models || [];
-        if (gradioModels.length > 0) {
-          activeModel = gradioModels[0]?.name || null;
+    // Query Gradio /v1/models to get the currently loaded/active model.
+    // Not for a remote engine: the Create page calls this on every load, and
+    // any request to Modal starts a billed GPU container even if no song is
+    // made. The deployed engine always loads its default model (no model flag
+    // in deploy/modal_app.py), so report that without asking.
+    let activeModel: string | null = process.env.ACESTEP_DIT_MODEL || 'acestep-v15-turbo';
+    if (ENGINE_IS_LOCAL) {
+      activeModel = null;
+      try {
+        const apiRes = await fetch(`${config.acestep.apiUrl}/v1/models`);
+        if (apiRes.ok) {
+          const data = await apiRes.json() as any;
+          const gradioModels = data?.data?.models || data?.models || [];
+          if (gradioModels.length > 0) {
+            activeModel = gradioModels[0]?.name || null;
+          }
         }
+      } catch {
+        // Gradio API unavailable
       }
-    } catch {
-      // Gradio API unavailable
     }
 
     // Check which models are downloaded (exist on disk)

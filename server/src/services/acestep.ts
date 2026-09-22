@@ -27,7 +27,7 @@ const __dirname = path.dirname(__filename);
 const AUDIO_DIR = path.join(__dirname, '../../public/audio');
 
 const ACESTEP_API = config.acestep.apiUrl;
-const ENGINE_IS_LOCAL = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(ACESTEP_API);
+export const ENGINE_IS_LOCAL = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(ACESTEP_API);
 
 // Resolve ACE-Step path (from env or default relative path)
 function resolveAceStepPath(): string {
