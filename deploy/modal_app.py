@@ -74,11 +74,11 @@ app = modal.App(APP_NAME, image=image)
     memory=16384,
     volumes={"/weights": weights},
     timeout=60 * 60,
-    # Generation runs inside Gradio's own queue, so Modal sees no HTTP traffic
-    # while a track is being made. At 300s the container was being recycled
-    # mid-generation and jobs never finished. This must exceed the longest
-    # generation: CPU takes 4-11 min, so 20 min leaves headroom.
-    scaledown_window=1200,
+    # Idle time is billed at the full GPU rate. A generation holds its result
+    # stream open, so Modal won't scale down mid-track; this only sets how long
+    # an idle container waits for the next song before shutting down (~80s
+    # cold start after that).
+    scaledown_window=300,
     max_containers=1,
 )
 # Modal serves one request per container unless told otherwise. Every Gradio
