@@ -14,6 +14,10 @@ interface SetupBody {
   username: string;
 }
 
+// Whitespace (incl. no-break space) and zero-width / bidi marks.
+const PASTE_JUNK = /[\s ​-\u200F\u202A-\u202E⁠﻿]/g;
+const PASTE_JUNK_ENDS = /^[\s ​-\u200F\u202A-\u202E⁠﻿]+|[\s ​-\u200F\u202A-\u202E⁠﻿]+$/g;
+
 function issueAccessToken(payload: { id: string; username: string }): string {
   return jwt.sign(payload, config.jwt.secret, jwtOptions);
 }
@@ -93,20 +97,36 @@ router.post('/login', async (req: Request, res: Response) => {
     const { email, password } = req.body ?? {};
     if (!email || !password) { res.status(400).json({ error: 'Email and password are required' }); return; }
 
+    // Credentials pasted from a chat app often carry stray spaces or invisible
+    // direction marks. An email can't contain either, so strip them all; the
+    // password is tried as typed first, then with them trimmed from the ends.
+    const cleanEmail = String(email).replace(PASTE_JUNK, '').toLowerCase();
+    const typed = String(password);
+    const trimmed = typed.replace(PASTE_JUNK_ENDS, '');
+
     const found = await pool.query(
       `SELECT id, username, email, password_hash, bio, avatar_url, banner_url, is_admin, created_at
          FROM users WHERE lower(email) = $1`,
-      [String(email).toLowerCase().trim()]
+      [cleanEmail]
     );
     const user = found.rows[0];
 
-    // Same response whether the account is missing or the password is wrong,
-    // so this can't be used to discover which emails are registered.
-    if (!user || !user.password_hash || !(await bcrypt.compare(String(password), user.password_hash))) {
+    const ok = !!user?.password_hash && (
+      await bcrypt.compare(typed, user.password_hash) ||
+      (trimmed !== typed && await bcrypt.compare(trimmed, user.password_hash))
+    );
+
+    const who = { email: cleanEmail, ip: req.headers['x-forwarded-for'] || req.ip, ua: String(req.headers['user-agent'] || '').slice(0, 120) };
+    if (!ok) {
+      const reason = !user ? 'no account' : !user.password_hash ? 'Google-only account' : 'wrong password';
+      console.warn(`[auth] login failed (${reason})`, who);
+      // Same response whether the account is missing or the password is wrong,
+      // so this can't be used to discover which emails are registered.
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
 
+    console.log('[auth] login ok', who);
     res.json({ user: publicUser(user), token: issueAccessToken({ id: user.id, username: user.username }) });
   } catch (error) {
     console.error('Login error:', error);
