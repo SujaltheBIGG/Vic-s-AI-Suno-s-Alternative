@@ -119,7 +119,9 @@ router.post('/login', async (req: Request, res: Response) => {
     const who = { email: cleanEmail, ip: req.headers['x-forwarded-for'] || req.ip, ua: String(req.headers['user-agent'] || '').slice(0, 120) };
     if (!ok) {
       const reason = !user ? 'no account' : !user.password_hash ? 'Google-only account' : 'wrong password';
-      console.warn(`[auth] login failed (${reason})`, who);
+      // Length only, never the password itself: enough to tell a typo from a
+      // browser filling in an old saved password.
+      console.warn(`[auth] login failed (${reason})`, { ...who, passwordLength: trimmed.length });
       // Same response whether the account is missing or the password is wrong,
       // so this can't be used to discover which emails are registered.
       res.status(401).json({ error: 'Invalid email or password' });
